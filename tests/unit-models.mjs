@@ -43,6 +43,7 @@ describe("MODELS projection", () => {
 		// Spot-check coverage of every current family.
 		assert.ok(find(models, "claude-opus-5"), "opus-5 present");
 		assert.ok(find(models, "claude-fable-5-1"), "fable-5-1 present");
+		assert.ok(find(models, "claude-mythos-5-1"), "mythos-5-1 present");
 		assert.ok(find(models, "claude-haiku-4-5"), "haiku present");
 	});
 
@@ -71,6 +72,23 @@ describe("MODELS projection", () => {
 		assert.deepEqual(find(models, "claude-sonnet-5")?.thinkingLevelMap, { xhigh: "xhigh", max: "max" });
 	});
 
+	it("adds Mythos 5.1 as a copy of Fable 5.1 until pi-ai lists it", () => {
+		const fable = oneM("claude-fable-5-1");
+		const models = buildModels([oneM("claude-opus-5-5"), { ...fable, maxTokens: 128000, thinkingLevelMap: { off: null } }]);
+		assert.deepEqual(models.map((m) => m.id), ["claude-mythos-5-1", "claude-fable-5-1", "claude-opus-5-5"]);
+		const { id, name, ...specs } = find(models, "claude-mythos-5-1");
+		assert.equal(name, "Claude Mythos 5.1");
+		const { id: _id, name: _name, ...fableSpecs } = find(models, "claude-fable-5-1");
+		assert.deepEqual(specs, fableSpecs);
+		assert.equal(specs.headers, undefined, "copied entry is still projected");
+	});
+
+	it("defers to pi-ai's own Mythos 5.1 entry, and skips the copy without Fable 5.1", () => {
+		const listed = buildModels([oneM("claude-fable-5-1"), mockPiAiModel("claude-mythos-5-1", { name: "from pi-ai" })]);
+		assert.deepEqual(listed.filter((m) => m.id === "claude-mythos-5-1").map((m) => m.name), ["from pi-ai"]);
+		assert.equal(find(buildModels([oneM("claude-opus-5-5")]), "claude-mythos-5-1"), undefined);
+	});
+
 	it("forwards undefined thinkingLevelMap unchanged (no fabricated defaults)", () => {
 		const models = buildModels([mockPiAiModel("claude-haiku-4-5")]);
 		assert.equal(find(models, "claude-haiku-4-5")?.thinkingLevelMap, undefined);
@@ -92,6 +110,10 @@ describe("resolveModel", () => {
 		assert.equal(resolveModel([...models].reverse(), "opus")?.id, newestOpus.id);
 	});
 
+	it("mythos shortcut resolves to Mythos 5.1", () => {
+		assert.equal(resolveModel(models, "mythos")?.id, "claude-mythos-5-1");
+	});
+
 	it("exact id beats newer partial match (claude-fable-5 → fable-5, not 5-1)", () => {
 		assert.equal(resolveModel(models, "claude-fable-5")?.id, "claude-fable-5");
 	});
@@ -99,7 +121,7 @@ describe("resolveModel", () => {
 
 describe("Claude Code runtime policy", () => {
 	it("measured-1M ids send [1m] on every plan", () => {
-		for (const id of ["claude-opus-5", "claude-opus-4-8", "claude-opus-4-7", "claude-fable-5", "claude-fable-5-1", "claude-sonnet-5-5", "claude-sonnet-5"]) {
+		for (const id of ["claude-opus-5", "claude-opus-4-8", "claude-opus-4-7", "claude-fable-5", "claude-fable-5-1", "claude-mythos-5-1", "claude-sonnet-5-5", "claude-sonnet-5"]) {
 			assert.deepEqual(resolveClaudeCodeRuntimeModel(oneM(id), PRO), { cliModelId: `${id}[1m]`, contextWindow: 1000000 });
 		}
 	});

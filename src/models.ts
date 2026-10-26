@@ -17,7 +17,25 @@ function isDatedAlias(id: string): boolean {
 
 // Family tiers for display order: flagship families first; unknown families
 // sink below all known ones.
-const FAMILY_ORDER = ["fable", "opus", "sonnet", "haiku"];
+const FAMILY_ORDER = ["mythos", "fable", "opus", "sonnet", "haiku"];
+
+// Models Claude Code serves that pi-ai's catalog does not list yet, each cloned
+// from the catalog entry of the model it shares specifications with. An entry
+// drops out as soon as pi-ai lists its id, and is skipped if the source is gone.
+// Mythos 5.1 is Fable 5.1 for verified organizations, with the same specifications:
+// https://platform.claude.com/docs/en/models/mythos-5-1/overview
+const CATALOG_GAPS = [
+	{ id: "claude-mythos-5-1", name: "Claude Mythos 5.1", sameAs: "claude-fable-5-1" },
+];
+
+function fillCatalogGaps<T extends { id: string; [key: string]: any }>(piAiModels: T[]): T[] {
+	const gaps = CATALOG_GAPS.flatMap(({ id, name, sameAs }) => {
+		if (piAiModels.some((m) => m.id === id)) return [];
+		const source = piAiModels.find((m) => m.id === sameAs);
+		return source ? [{ ...source, id, name }] : [];
+	});
+	return [...piAiModels, ...gaps];
+}
 
 // Project pi-ai's model entries down to the fields pi's registerProvider expects,
 // newest generation first. Context-dependent display labels are applied after
@@ -30,7 +48,7 @@ function versionRank(id: string): { family: string; tuple: [number, number] } {
 }
 
 export function buildModels<T extends { id: string; [key: string]: any }>(piAiModels: T[]) {
-	return piAiModels
+	return fillCatalogGaps(piAiModels)
 		.filter((m) => typeof m.id === "string" && !isDatedAlias(m.id))
 		.sort((a, b) => {
 			const fa = FAMILY_ORDER.indexOf(versionRank(a.id).family);
@@ -77,13 +95,15 @@ export type ClaudeCodeRuntimeModel = {
 // - The registered contextWindow must match the window the bridge actually
 //   requests, or pi's status bar and compaction threshold misreport.
 // [1m] ids verified to serve 1M on every plan (sonnet-5-5 measured on Pro with
-// and without Extra Usage; opus-5-5 on Max per its run notes). A new model
+// and without Extra Usage; opus-5-5 on Max per its run notes; mythos-5-1 on
+// Team without Extra Usage). A new model
 // serves 200K until someone measures it (diag/context-size.mjs) and adds it
 // here. Known exception unrelated to long context: fable-5 is not included
 // with Pro account without Extra Usage.
 const MEASURED_ONE_M = new Set([
 	"claude-fable-5",
 	"claude-fable-5-1",
+	"claude-mythos-5-1",
 	"claude-opus-5-5",
 	"claude-opus-5",
 	"claude-opus-4-8",
@@ -128,21 +148,26 @@ export function claudeCodeModelId(model: { id: string }, settings: LongContextSe
 	return resolveClaudeCodeRuntimeModel(model, settings).cliModelId;
 }
 
-/** Fable adaptive thinking cannot be disabled and needs summarized display. */
+/** Fable (and Mythos 5.1, the same model) adaptive thinking cannot be disabled
+ *  and needs summarized display. */
 export function adaptiveThinkingAlwaysOn(modelId: string): boolean {
-	return modelId === "claude-fable-5-1" || modelId.startsWith("claude-fable-5-1[")
-		|| modelId === "claude-fable-5" || modelId.startsWith("claude-fable-5[");
+	return /^claude-(?:fable-5(?:-1)?|mythos-5-1)(?:\[|$)/.test(modelId);
+}
+
+// Fable 5.1 or Mythos 5.1 (the same model for verified organizations), bare or [1m].
+function isFable51(modelId: string): boolean {
+	return /^claude-(?:fable|mythos)-5-1(?:\[|$)/.test(modelId);
 }
 
 /** Fable 5.1 thinking signatures bind to the original conversation prefix, so
  *  rebuilt sessions must drop them; ordinary resume can preserve them. */
 export function thinkingBoundToPrefix(modelId: string): boolean {
-	return modelId === "claude-fable-5-1" || modelId.startsWith("claude-fable-5-1[");
+	return isFable51(modelId);
 }
 
 /** Minimum CLI version accepted by Fable 5.1. */
 export function minClaudeCodeVersionForModel(modelId: string): string | undefined {
-	if (modelId === "claude-fable-5-1" || modelId.startsWith("claude-fable-5-1[")) return "2.1.251";
+	if (isFable51(modelId)) return "2.1.251";
 	return undefined;
 }
 

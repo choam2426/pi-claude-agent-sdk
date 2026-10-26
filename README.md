@@ -25,15 +25,15 @@ Requires pi 0.86.1 or newer.
 
 Use `/model` to select any Claude model in pi-ai's catalog, e.g. `claude-bridge/claude-fable-5-1`, `claude-bridge/claude-opus-5`, or `claude-bridge/claude-haiku-4-5`.
 
-Fable 5.1 needs Claude Code **2.1.251 or newer**. If an explicitly configured CLI is too old, the bridge can use a current `claude` on PATH.
+Fable 5.1 and Mythos 5.1 need Claude Code **2.1.251 or newer**. If an explicitly configured CLI is too old, the bridge can use a current `claude` on PATH.
 
 Behind the scenes, pi's tools are bridged to Claude Code but everything works like normal in pi. Bash commands get Claude Code's 120-second default timeout since pi's bash has none. Skills are forwarded to Claude Code's system prompt, and steering mid-turn reaches Claude at the next tool boundary.
 
 **Authentication:** the bridge requires an Anthropic OAuth credential (or API key) configured in Pi and uses Pi's token refresh, renewing an OAuth token with less than two hours left before it starts a Claude Code turn (a turn keeps the token it started with). Claude Code login and inherited Claude/Anthropic authentication settings are deliberately ignored, so configure Anthropic authentication in Pi before using the provider.
 
-The model list comes from pi-ai's Anthropic catalog automatically — when pi-ai adds a new Claude model, it appears in `/model` after updating the package, no bridge update needed. Dated snapshot ids (e.g. `claude-opus-4-5-20251101`) are not shown.
+The model list comes from pi-ai's Anthropic catalog automatically — when pi-ai adds a new Claude model, it appears in `/model` after updating the package, no bridge update needed. Dated snapshot ids (e.g. `claude-opus-4-5-20251101`) are not shown. Until pi-ai lists it, the bridge adds `claude-bridge/claude-mythos-5-1` itself with Fable 5.1's specifications; it is the same model, available only to [verified organizations](https://platform.claude.com/docs/en/models/mythos-5-1/overview).
 
-**1M Context:** Fable 5/5.1, Opus 5.5/5/4.8/4.7, and Sonnet 5.5/5 get 1M context. Opus 4.6 gets 1M only on a Max plan or with Extra Usage, and Sonnet 4.6 only with Extra Usage — set `provider.plan` and/or `provider.longContextExtraUsage` as described in [Configuration](#configuration).
+**1M Context:** Fable 5/5.1, Mythos 5.1, Opus 5.5/5/4.8/4.7, and Sonnet 5.5/5 get 1M context. Opus 4.6 gets 1M only on a Max plan or with Extra Usage, and Sonnet 4.6 only with Extra Usage — set `provider.plan` and/or `provider.longContextExtraUsage` as described in [Configuration](#configuration).
 
 ## Configuration
 

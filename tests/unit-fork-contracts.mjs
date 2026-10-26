@@ -25,7 +25,8 @@ describe("fork contracts retained across upstream sync", () => {
 	});
 
 	it("preserves Fable thinking and CLI compatibility policies", () => {
-		for (const id of ["claude-fable-5-1", "claude-fable-5-1[1m]"]) {
+		// Mythos 5.1 is the same model as Fable 5.1, so it shares every policy.
+		for (const id of ["claude-fable-5-1", "claude-fable-5-1[1m]", "claude-mythos-5-1", "claude-mythos-5-1[1m]"]) {
 			assert.equal(adaptiveThinkingAlwaysOn(id), true);
 			assert.equal(thinkingBoundToPrefix(id), true);
 			assert.equal(minClaudeCodeVersionForModel(id), "2.1.251");

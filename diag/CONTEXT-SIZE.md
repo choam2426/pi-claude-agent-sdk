@@ -30,6 +30,13 @@ The Opus 5.5 rows come from a later run, same options and auth:
   `overageStatus: "rejected"`, `overageDisabledReason: "org_level_disabled"`
 - Date: 2026-09-23
 
+The Mythos 5.1 rows come from a later run, same options and auth:
+
+- Claude Agent SDK 0.3.285 (bundled Claude Code 2.1.285)
+- Plan: Team (`organizationType: "claude_team"`), Extra Usage off
+  (`hasExtraUsageEnabled: false`); no table column, recorded in the note below
+- Date: 2026-10-26
+
 The Pro-credits-on and Pro-credits-off columns come from later runs, same
 options and auth:
 
@@ -73,6 +80,7 @@ the footnote below the table).
 | `claude-haiku-4-5[1m]`   | 429†             | 400             | 400              | 400             |
 
 Raw runs: `.test-output/context-size/{pro,max}-2026-06-26T21-*.json`,
+Mythos 5.1 `.test-output/context-size/team-2026-10-26T01-40-30-749Z.json`,
 Opus 5.5 `.test-output/context-size/max-2026-09-23T13-50-08-107Z.json`,
 Sonnet 5.5 `.test-output/context-size/max-2026-09-28T18-33-28-340Z.json`
 (Pro credits on) and `.test-output/context-size/pro-2026-09-28T18-56-52-762Z.json`
@@ -84,6 +92,11 @@ both the bare id and `[1m]` on Max with credits off (128K max output either
 way), the same shape as Opus 4.7 — the suffix is not what buys the window
 there. The bridge still requests `[1m]`, which is what keeps its
 `MEASURED_ONE_M` entry safe on the plans below.
+
+Measured 2026-10-26, Team without Extra Usage: Mythos 5.1 serves 1M from both
+the bare id and `[1m]` (64K max output, same as Fable 5.1 in the same
+condition), so it joins `MEASURED_ONE_M`. Pro and Max are not measured; the
+model is only available to verified organizations.
 
 Measured 2026-09-28, Pro without Extra Usage: Sonnet 5.5 serves 1M from both
 the bare id and `[1m]` — no credits gate, matching Anthropic's docs, so its

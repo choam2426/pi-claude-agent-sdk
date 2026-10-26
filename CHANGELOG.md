@@ -1,5 +1,9 @@
 # Changelog
 
+## UNRELEASED
+
+- **Add: Claude Mythos 5.1** — `claude-bridge/claude-mythos-5-1`, selectable as `mythos`, with 1M context. pi-ai 1.4.0 does not list it yet, so the bridge adds it as a copy of the catalog's Fable 5.1 entry (Anthropic documents it as the same model for verified organizations) and defers to pi-ai once it does. It shares Fable 5.1's thinking and minimum-CLI policies. 1M measured on Team without Extra Usage; see `diag/CONTEXT-SIZE.md`.
+
 ## 0.9.2 — 2026-10-01
 
 - **Fix: long turns failing with "401 OAuth access token has expired"** — Claude Code keeps the OAuth token it was spawned with for the whole turn and can't refresh it, while Pi only refreshes a token with under five minutes left, so a turn that outlived its token failed until the next prompt. The bridge now asks Pi for at least two hours of validity before spawning, through `ModelRuntime.getAuth`'s `minOAuthValidityMs` (Pi's public `getProviderAuth` takes no overrides), falling back to `getProviderAuth` if that fails. Covered by `tests/unit-child-env.mjs` against Pi's real registry.
